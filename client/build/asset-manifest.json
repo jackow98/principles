@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/static/css/main.662e00b9.chunk.css",
+    "main.js": "/static/js/main.183db1e3.chunk.js",
+    "main.js.map": "/static/js/main.183db1e3.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.ff720301.js",
+    "runtime-main.js.map": "/static/js/runtime-main.ff720301.js.map",
+    "static/js/2.25eaae97.chunk.js": "/static/js/2.25eaae97.chunk.js",
+    "static/js/2.25eaae97.chunk.js.map": "/static/js/2.25eaae97.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.be3c3f7ff2a2a646b42a541ce99e91dc.js": "/precache-manifest.be3c3f7ff2a2a646b42a541ce99e91dc.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/main.662e00b9.chunk.css.map": "/static/css/main.662e00b9.chunk.css.map",
+    "static/js/2.25eaae97.chunk.js.LICENSE.txt": "/static/js/2.25eaae97.chunk.js.LICENSE.txt",
+    "static/media/github.svg": "/static/media/github.ddc25012.svg",
+    "static/media/notion-logo.svg": "/static/media/notion-logo.9ee7794d.svg",
+    "static/media/search.svg": "/static/media/search.23cdb344.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.ff720301.js",
+    "static/js/2.25eaae97.chunk.js",
+    "static/css/main.662e00b9.chunk.css",
+    "static/js/main.183db1e3.chunk.js"
+  ]
+}
