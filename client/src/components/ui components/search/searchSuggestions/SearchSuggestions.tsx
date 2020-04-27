@@ -1,18 +1,22 @@
 import React from 'react';
 
-export default function SearchSuggestions() {
+export default function SearchSuggestions({searchSuggestionsRef, updateSearchTerm}: any) {
 
     return (
-        <div className="h-64">
-            <div className="block border-2 rounded-lg overflow-y-scroll max-h-full z-10 bg-white">
+        <div className="container bg-white w-auto h-auto mx-auto md:pt-2" ref={searchSuggestionsRef}>
+            <div className="h-64  w-auto overflow-auto shadow-xl md:rounded-lg border-t-0 md:border-2">
                 {
-                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(() => {
+                    ["Education", "Technology", "Life", "Self"].map((value) => {
                         return <div
-                            className="block w-full hover:bg-gray-200 hover:text-pink-600 font-semibold px-4 py-4">Test</div>
+                            key={value}
+                            className="cursor-pointer w-full hover:bg-gray-200 hover:text-pink-600 font-semibold px-4 py-4"
+                            onClick={() => updateSearchTerm(value)}
+                        >{value}
+                        </div>
                     })
                 }
             </div>
         </div>
-
     )
+
 }

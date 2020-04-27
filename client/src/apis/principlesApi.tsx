@@ -7,5 +7,5 @@ export default axios.create({
     // baseURL: "https://jackow98.site/"
 
     // For development
-    baseURL: "http://api.conceptnet.io/c/en/"
+    baseURL: "http://localhost:8080/Principles/"
 })

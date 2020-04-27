@@ -1,15 +1,22 @@
 package com.persistence
 
-import com.google.gson.JsonObject
+import com.model.Principle
 import dk.dren.hunspell.Hunspell
+import org.apache.jena.query.ParameterizedSparqlString
+import org.apache.jena.query.QueryFactory
+import org.apache.jena.query.ResultSet
+import org.apache.jena.update.UpdateFactory
+import org.apache.jena.vocabulary.RDF
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
-import javax.swing.text.html.parser.Parser
 
 
 val DICTIONARY: Hunspell.Dictionary = Hunspell.getInstance().getDictionary("src/main/kotlin/com/persistence/en_GB")
 
+/**
+ * Map of common educational terms in full searchable values
+ */
 fun getEducationalLanguageMap(): Map<String, String> {
     val items = HashMap<String, String>()
 
@@ -31,6 +38,9 @@ fun getEducationalLanguageMap(): Map<String, String> {
     return items
 }
 
+/**
+ * Converts common educational [searchTerm] into full searchable values
+ */
 fun convertEducationalTerm(searchTerm: String): String {
     val map = getEducationalLanguageMap()
 
@@ -41,6 +51,9 @@ fun convertEducationalTerm(searchTerm: String): String {
     })!!
 }
 
+/**
+ * Corrects the spelling of [searchTermRaw] provided
+ */
 fun correctSpelling(searchTermRaw: String): String {
 
     val searchTermMisspelled = DICTIONARY.misspelled(searchTermRaw)
@@ -55,38 +68,47 @@ fun correctSpelling(searchTermRaw: String): String {
     }
 }
 
-fun getSynonymsOfWord(searchTerm: String): MutableList<String> {
+/**
+ * Get synonyms of [searchTerm]
+ */
+fun getRelationsOfWord(searchTerm: String): List<String> {
 
     try {
-        val url = "http://api.conceptnet.io/query?start=/c/en/${searchTerm.decapitalize()}&rel[1]=/r/Synonym&rel[1]=/r/RelatedTo&limit=20"
+        val url = "http://api.conceptnet.io/query?node=/c/en/${searchTerm.decapitalize()}&other=/c/en&limit=100"
 
         val response: JSONObject = khttp.get(url).jsonObject
         val edges: JSONArray = response["edges"] as JSONArray
 
-        val synonyms = mutableListOf<String>()
+        val relations = mutableListOf<String>()
 
         for (edgeIndex in 0 until edges.length()) {
             val edge: JSONObject = edges[edgeIndex] as JSONObject
+
             val end: JSONObject = edge["end"] as JSONObject
-            val language: String = end["language"] as String
+            val start: JSONObject = edge["start"] as JSONObject
+            val weight: Double = edge["weight"] as Double
 
-            println(language)
+            val endLabel: String = end["label"] as String
+            val startLabel: String = start["label"] as String
 
-            if(language == "en"){
-                val label: String = end["label"] as String
-                println(label)
-                synonyms.add(label)
+            if (weight > 2) {
+                if (startLabel != endLabel) {
+                    relations.add(startLabel)
+                }
+                relations.add(endLabel)
             }
         }
 
-        return synonyms
-    }catch (e:Exception){
+        return relations.distinct()
+    } catch (e: Exception) {
         return mutableListOf<String>()
     }
 }
 
-
-fun getPrinciples(searchTermRawString: String): MutableList<List<String>> {
+/**
+ * Retrieves list of principles related to [searchTermRawString]
+ */
+fun getPrinciples(searchTermRawString: String): Array<Principle> {
 
     val amendedSearchTerms = mutableListOf<List<String>>()
     val searchTermRawArray = searchTermRawString.split(" ").toTypedArray()
@@ -103,7 +125,7 @@ fun getPrinciples(searchTermRawString: String): MutableList<List<String>> {
             val spellCheckedSearchTerm = correctSpelling(searchTermRaw)
             allSearchTermVariations.add(spellCheckedSearchTerm)
 
-            val synonymsOfWordJson = getSynonymsOfWord(spellCheckedSearchTerm)
+            val synonymsOfWordJson = getRelationsOfWord(spellCheckedSearchTerm)
 
             for (synonym in synonymsOfWordJson) {
                 allSearchTermVariations.add(synonym)
@@ -112,5 +134,66 @@ fun getPrinciples(searchTermRawString: String): MutableList<List<String>> {
         }
         amendedSearchTerms.add(allSearchTermVariations.distinct())
     }
-    return amendedSearchTerms
+
+    return getPrinciplesFromTriplestore(amendedSearchTerms)
+}
+
+fun getPrinciplesFromTriplestore(amendedSearchTerms: MutableList<List<String>>): Array<Principle> {
+
+    val pss = ParameterizedSparqlString()
+    // Add a Base URI and define the rdfs prefix
+
+    pss.setNsPrefix("sc", SC);
+    pss.setNsPrefix("rdf", RDF.getURI());
+    pss.setNsPrefix("bds", BDS);
+
+    pss.append("SELECT ?principleText ?id ?rank ?topic ");
+    pss.append("WHERE {")
+    pss.append("?p rdf:type sc:CreativeWork . ");
+    pss.append("?p sc:text ?principleText . ");
+    pss.append("?p sc:category ?topic . ");
+    pss.append("?p sc:identifier ?id . ");
+    pss.append("?principleText bds:search \"");
+    for (searchTerm in amendedSearchTerms) {
+        for (variation in searchTerm) {
+            pss.append("|*$variation*")
+        }
+    }
+    pss.append("\". ");
+    pss.append("?principleText bds:rank ?rank. ");
+    pss.append("} ")
+    pss.append("GROUP BY ?principleText ?rank ?topic ?id ")
+    pss.append("ORDER BY ?rank ")
+
+    println(pss.toString())
+
+    val rs: ResultSet = executeQuery(QueryFactory.create(pss.toString()))!!
+
+    return rdfToJsonObject(rs)
+}
+
+fun addPrinciple(p: Principle) {
+    return executeUpdate(UpdateFactory.create(jsonToRdfPrinciple(p)))
+}
+
+fun jsonToRdfPrinciple(p: Principle): String {
+
+    val pss = ParameterizedSparqlString()
+
+    pss.setNsPrefix("sc", SC);
+    pss.setNsPrefix("rdf", RDF.getURI());
+    pss.setNsPrefix("bds", BDS);
+
+    pss.append("INSERT DATA{ ")
+    pss.append("<${getResourceFromValue(p.principleText.sha256(), PRINCIPLES_GRAPH)}> a <${SC + "CreativeWork"}> ; ")
+
+
+    //User generated
+    pss.append("<${getUriFromKey("principleText")}> \"${p.principleText}\" ; ")
+    pss.append("<${getUriFromKey("id")}> \"${p.id}\" ; ")
+    pss.append("<${getUriFromKey("topic")}> \"${p.topic}\" ; ")
+
+    pss.append(" }")
+
+    return pss.toString()
 }
