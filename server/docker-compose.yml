@@ -1,0 +1,19 @@
+version: '3'
+services:
+  triplestore:
+    image: lyrasis/blazegraph:2.1.5
+    ports:
+      - "9999:9999"
+    restart: on-failure
+    networks:
+      - jacks-net
+  api:
+    build: .
+    image: jackow98/learning-materials-server
+    ports:
+      - "80:8080"
+    restart: on-failure
+    networks:
+     - jacks-net
+networks:
+  jacks-net:

@@ -4,8 +4,8 @@ const axios = require('axios').default;
 export default axios.create({
 
     // For production
-    // baseURL: "https://jackow98.site/"
+    baseURL: "https://principles.jackow98.site/"
 
     // For development
-    baseURL: "http://localhost:8080/Principles/"
+    // baseURL: "http://localhost:8080/Principles/"
 })
