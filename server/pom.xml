@@ -102,6 +102,12 @@
 			<artifactId>klaxon</artifactId>
 			<version>5.0.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.opencastproject/opencast-dictionary-hunspell -->
+		<dependency>
+			<groupId>org.opencastproject</groupId>
+			<artifactId>opencast-dictionary-hunspell</artifactId>
+			<version>8.3</version>
+		</dependency>
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-swagger-ui</artifactId>

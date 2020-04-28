@@ -4,10 +4,10 @@ import re
 import requests
 
 # For production
-# URL = "https://jackow98.site/"
+URL = "https://principles.jackow98.site/Principles"
 
 # For development
-URL = "http://localhost:8080/Principles"
+# URL = "http://localhost/Principles"
 
 topic = ""
 principle = ""
@@ -57,5 +57,5 @@ with open('principles.md', 'r', encoding='utf8') as fin:
             if r.status_code != 200:
                 print(principle + " - Not added")
 
-            print(f"{identifier}, {principle}")
+            # print(f"{identifier}, {principle}")
             principle = ""

@@ -10,25 +10,50 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP
 import org.apache.jena.update.UpdateExecutionFactory
 import org.apache.jena.update.UpdateProcessor
 import org.apache.jena.update.UpdateRequest
+import java.net.HttpURLConnection
+import java.net.URL
+
 
 /**
  * Executes sparql [query] on tripletore and returns the associated result set
  */
 fun executeQuery(query: Query): ResultSet? {
-    //TODO: Better define type, use generics?
+
+    buildIndex()
 
     // Remote execution.
-    try {
+    return try {
         val qexec = QueryExecutionFactory.sparqlService(SPARQL_REMOTE_ENDPOINT, query)
 
         // Set the specific timeout.
         (qexec as QueryEngineHTTP).addParam("timeout", "10000")
 
         // Execute.
-        return qexec.execSelect()
+        qexec.execSelect()
     } catch (e: Exception) {
         e.printStackTrace()
-        return null
+        null
+    }
+}
+
+fun buildIndex() {
+    // Build text index.
+    try {
+        val url = URL("$REMOTE_ENDPOINT/namespace/kb/textIndex?force-index-create=true")
+
+        with(url.openConnection() as HttpURLConnection) {
+            requestMethod = "POST"  // optional default is GET
+
+            println("\nSent 'POST' request to URL : $url; Response Code : $responseCode")
+
+            inputStream.bufferedReader().use {
+                it.lines().forEach { line ->
+                    println(line)
+                }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }
 
@@ -52,7 +77,7 @@ fun rdfToJsonObject(rs: ResultSet): Array<Principle> {
         literals.add("topic")
 
         for (literal in literals) {
-            if (r.contains(literal)){
+            if (r.contains(literal)) {
                 subjectStringBuilder.append("\"${literal}\":\"${r.getLiteral(literal)}\",")
             }
         }

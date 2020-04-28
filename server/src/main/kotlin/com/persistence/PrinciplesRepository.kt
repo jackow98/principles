@@ -12,8 +12,6 @@ import org.json.JSONObject
 import java.util.*
 
 
-val DICTIONARY: Hunspell.Dictionary = Hunspell.getInstance().getDictionary("src/main/kotlin/com/persistence/en_GB")
-
 /**
  * Map of common educational terms in full searchable values
  */
@@ -56,8 +54,11 @@ fun convertEducationalTerm(searchTerm: String): String {
  */
 fun correctSpelling(searchTermRaw: String): String {
 
-    val searchTermMisspelled = DICTIONARY.misspelled(searchTermRaw)
-    val suggestedReplacements = DICTIONARY.suggest(searchTermRaw)
+//    TODO: Fix so this works in jar executable - Problem is Hunspell requires a file path however not recommended in jars
+    val dictionary: Hunspell.Dictionary = Hunspell.getInstance().getDictionary("./en_GB")
+
+    val searchTermMisspelled = dictionary.misspelled(searchTermRaw)
+    val suggestedReplacements = dictionary.suggest(searchTermRaw)
 
     return if (!searchTermMisspelled) {
         searchTermRaw
@@ -122,10 +123,11 @@ fun getPrinciples(searchTermRawString: String): Array<Principle> {
         allSearchTermVariations.add(convertedSearchTerm)
 
         if (convertedSearchTerm === searchTermRaw) {
-            val spellCheckedSearchTerm = correctSpelling(searchTermRaw)
-            allSearchTermVariations.add(spellCheckedSearchTerm)
+//            val spellCheckedSearchTerm = correctSpelling(searchTermRaw)
+//            allSearchTermVariations.add(spellCheckedSearchTerm)
 
-            val synonymsOfWordJson = getRelationsOfWord(spellCheckedSearchTerm)
+//            val synonymsOfWordJson = getRelationsOfWord(spellCheckedSearchTerm)
+            val synonymsOfWordJson = getRelationsOfWord(searchTermRaw)
 
             for (synonym in synonymsOfWordJson) {
                 allSearchTermVariations.add(synonym)
@@ -146,6 +148,7 @@ fun getPrinciplesFromTriplestore(amendedSearchTerms: MutableList<List<String>>):
     pss.setNsPrefix("sc", SC);
     pss.setNsPrefix("rdf", RDF.getURI());
     pss.setNsPrefix("bds", BDS);
+    pss.setNsPrefix("text", TEXT);
 
     pss.append("SELECT ?principleText ?id ?rank ?topic ");
     pss.append("WHERE {")
@@ -153,6 +156,7 @@ fun getPrinciplesFromTriplestore(amendedSearchTerms: MutableList<List<String>>):
     pss.append("?p sc:text ?principleText . ");
     pss.append("?p sc:category ?topic . ");
     pss.append("?p sc:identifier ?id . ");
+//    pss.append("?p text:query (sc:text \"")
     pss.append("?principleText bds:search \"");
     for (searchTerm in amendedSearchTerms) {
         for (variation in searchTerm) {
@@ -160,6 +164,7 @@ fun getPrinciplesFromTriplestore(amendedSearchTerms: MutableList<List<String>>):
         }
     }
     pss.append("\". ");
+//    pss.append("?p sc:text ?principleText. ")
     pss.append("?principleText bds:rank ?rank. ");
     pss.append("} ")
     pss.append("GROUP BY ?principleText ?rank ?topic ?id ")
@@ -173,6 +178,7 @@ fun getPrinciplesFromTriplestore(amendedSearchTerms: MutableList<List<String>>):
 }
 
 fun addPrinciple(p: Principle) {
+    println("adding ${p.principleText}")
     return executeUpdate(UpdateFactory.create(jsonToRdfPrinciple(p)))
 }
 

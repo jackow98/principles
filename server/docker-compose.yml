@@ -9,7 +9,7 @@ services:
       - jacks-net
   api:
     build: .
-    image: jackow98/learning-materials-server
+    image: jackow98/principles-server
     ports:
       - "80:8080"
     restart: on-failure
