@@ -19,7 +19,7 @@ export default function SearchBar({loading, onSearch, updateSearchTerm, placehol
             <div className="flex relative h-full mb-4 bg-gray-200 md:rounded-lg">
                 <div className="p-5 w-2/12 md:w-1/12">
                     {loading ?
-                        <div className="h-full w-full"><Loader/></div> :
+                        <div className="h-full w-full p-4 md:p-0"><Loader/></div> :
                         <img className="h-full w-full" src={search} alt={""}/>
                     }
                 </div>

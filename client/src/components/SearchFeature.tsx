@@ -52,12 +52,12 @@ export default function SearchFeature() {
             }
         };
 
-        if(searchIntent){
+        if (searchIntent) {
             getSearchResults();
             setSearchIntent(false)
         }
 
-    },[searchIntent]);
+    }, [searchIntent]);
 
 
     const handleSubmit = async () => {
